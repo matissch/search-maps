@@ -20,9 +20,19 @@ export class MapComponent implements AfterViewInit {
 
   ngAfterViewInit() {
     this.map = new Map('map').setView(this.options.center, this.options.zoom);
+    
+    // Add OpenStreetMap base layer
     tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
       attribution: '© OpenStreetMap contributors'
+    }).addTo(this.map);
+
+    // Add WMS layer from geocat.ch (Switzerland maps)
+    tileLayer.wms('https://wms.geo.admin.ch/', {
+      layers: 'ch.bafu.gefaehrdungskarte-oberflaechenabfluss', // Replace with desired geocat.ch layer
+      format: 'image/png',
+      transparent: true,
+      attribution: 'Map data © geocat.ch'
     }).addTo(this.map);
 
     // Listen for the moveend event
