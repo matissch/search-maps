@@ -21,7 +21,10 @@
     "@angular/platform-browser-dynamic": "~10.0.14",
     "@angular/router": "~10.0.14",
     "@asymmetrik/ngx-leaflet": "^7.0.1",
+    "@types/proj4": "^2.5.5",
     "leaflet": "^1.7.1",
+    "proj4": "^2.14.0",
+    "proj4leaflet": "^1.0.2",
     "rxjs": "~6.5.5",
     "tslib": "^2.0.0",
     "zone.js": "~0.10.3"

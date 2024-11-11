@@ -1,5 +1,8 @@
 import { Component, AfterViewInit } from '@angular/core';
 import { tileLayer, latLng, marker, Marker, icon, Map } from 'leaflet';
+import * as L from 'leaflet'; // Import the L namespace
+import * as proj4 from 'proj4';
+import 'proj4leaflet';
 
 @Component({
   selector: 'app-map',
@@ -35,6 +38,9 @@ export class MapComponent implements AfterViewInit {
       attribution: 'Map data © geocat.ch'
     }).addTo(this.map);
 
+    // Fetch and add GeoJSON layer
+    this.addGeoJSONLayer();
+
     // Listen for the moveend event
     this.map.on('moveend', () => {
       const center = this.map.getCenter();
@@ -42,6 +48,46 @@ export class MapComponent implements AfterViewInit {
       this.options.zoom = this.map.getZoom();
       console.log('Map moved to center:', this.options.center, 'with zoom:', this.options.zoom);
     });
+  }
+
+  private addGeoJSONLayer(): void {
+    const geojsonUrl = 'https://data.geo.admin.ch/ch.meteoschweiz.messwerte-niederschlag-10min/ch.meteoschweiz.messwerte-niederschlag-10min_de.json';
+
+    // Define the EPSG:2056 projection
+    const crs = new L.Proj.CRS('EPSG:2056',
+      '+proj=somerc +lat_0=46.95240555555556 +lon_0=7.439583333333333 +k_0=1 +x_0=2600000 +y_0=1200000 +ellps=bessel +towgs84=674.374,15.056,405.346,0,0,0,0 +units=m +no_defs',
+      {
+        resolutions: [4000, 2000, 1000, 500, 250, 100, 50, 20, 10, 5, 2.5, 2, 1, 0.5]
+      }
+    );
+
+    fetch(geojsonUrl)
+      .then(response => response.json())
+      .then(data => {
+        L.geoJSON(data, {
+          pointToLayer: (feature, latlng) => {
+            // Transform coordinates from EPSG:2056 to EPSG:4326
+            const transformedLatLng = crs.projection.unproject(L.point(latlng.lng, latlng.lat));
+            return L.marker(transformedLatLng, {
+              icon: L.icon({
+                iconSize: [25, 41],
+                iconAnchor: [13, 41],
+                iconUrl: 'assets/images/marker-icon.png',
+                iconRetinaUrl: 'assets/images/marker-icon-2x.png',
+                shadowUrl: 'assets/images/marker-shadow.png'
+              })
+            });
+          },
+          onEachFeature: (feature, layer) => {
+            if (feature.properties && feature.properties.description) {
+              layer.bindPopup(feature.properties.description);
+            }
+          }
+        }).addTo(this.map);
+      })
+      .catch(error => {
+        console.error('Error fetching GeoJSON data:', error);
+      });
   }
 
   searchAddress() {
